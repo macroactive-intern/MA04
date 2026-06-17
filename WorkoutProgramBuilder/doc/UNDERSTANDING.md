@@ -51,6 +51,7 @@ Program creation input
     }
   ]
 }
+```
 
 ------------------------------------
 
@@ -68,6 +69,7 @@ Program update input
   "name": "Updated Program Name",
   "description": "Updated description"
 }
+```
 
 This endpoint will not update nested days or exercises, because as to the brief we only need to Update the program metadata.
 
@@ -84,6 +86,7 @@ Add exercise input
   "reps": "8–12",
   "notes": "Controlled tempo"
 }
+```
 
 New exercises should be added at the end of the day by default. 
 
@@ -97,6 +100,7 @@ Reorder exercise input
 {
   "position": 1
 }
+```
 
 The position should be validated as a required integer
 
