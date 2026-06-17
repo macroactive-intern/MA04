@@ -35,6 +35,7 @@ Program creation input
 
 `POST /api/programs` accepts a JSON body like
 
+```json
 {
   "name": "12-Week Strength Block",
   "description": "...",
@@ -62,6 +63,7 @@ Program update input
 
 `PUT /api/programs/{id}` updates only program metadata.
 
+```json
 {
   "name": "Updated Program Name",
   "description": "Updated description"
@@ -75,6 +77,7 @@ Add exercise input
 
 `POST /api/programs/{id}/days/{day}/exercises` adds one exercise to an existing day.
 
+```json
 {
   "exercise_name": "Incline Dumbbell Press",
   "sets": 3,
@@ -90,6 +93,7 @@ Reorder exercise input
 
 `PATCH /api/programs/{id}/days/{day}/exercises/{exercise}/reorder` changes one exercise's position.
 
+```json
 {
   "position": 1
 }
@@ -341,3 +345,4 @@ Ordering must always be explicit
 Because order is a core requirement, I should always use `orderBy('position')` when loading days and exercises.
 
 ---------------------------------------------------------
+
