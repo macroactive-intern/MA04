@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-18
 **Rubric:** Production-Ready Rubric (rubric.md)
-**Result:** 4 pass / 6 fail
+**Result:** 10 pass / 0 fail
 
 > **Note:** The rubric was written for a Loot Drop Simulator. Domain-specific values (loot pity threshold, trade expiry, guild membership limits) do not exist in this project. Where a criterion references those concepts, the underlying principle (no magic numbers, log state changes) is applied to the equivalent operations in this codebase.
 
@@ -10,9 +10,9 @@
 
 ## Criterion 1 — Type Safety
 
-**Result: FAIL**
+**Result: PASS**
 
-`declare(strict_types=1)` is missing from every PHP file under `app/`. All 12 files are affected:
+`declare(strict_types=1)` is present in all 12 PHP files under `app/`:
 
 | File |
 | --- |
@@ -29,9 +29,7 @@
 | `app/Http/Requests/ReorderProgramExerciseRequest.php` |
 | `app/Providers/AppServiceProvider.php` |
 
-**What passes:** All public and protected methods declare typed parameters and return types. No untyped method signatures were found.
-
-**Fix:** Add `declare(strict_types=1);` as the second line (after `<?php`) in every file listed above.
+All public and protected methods declare typed parameters and return types. No untyped method signatures were found.
 
 ---
 
@@ -47,56 +45,34 @@ There are no named exception classes in this codebase. This is acceptable here b
 
 ## Criterion 3 — Observability
 
-**Result: FAIL**
+**Result: PASS**
 
-No `Log::info()` or any other logging call exists in `app/`. The following state-changing operations emit no structured log entry:
+All six state-changing operations emit a structured `Log::info()` entry with the entity ID and actor ID:
 
-| Action | File |
-| --- | --- |
-| `ProgramController::store` | `app/Http/Controllers/Api/ProgramController.php:22` |
-| `ProgramController::update` | `app/Http/Controllers/Api/ProgramController.php:67` |
-| `ProgramController::destroy` | `app/Http/Controllers/Api/ProgramController.php:78` |
-| `ProgramExerciseController::store` | `app/Http/Controllers/Api/ProgramExerciseController.php:16` |
-| `ProgramExerciseController::destroy` | `app/Http/Controllers/Api/ProgramExerciseController.php:35` |
-| `ProgramExerciseController::reorder` | `app/Http/Controllers/Api/ProgramExerciseController.php:63` |
-
-**Fix:** Add at minimum `Log::info()` with the entity ID and actor ID after each successful write. Example for `destroy`:
-
-```php
-Log::info('program.deleted', ['program_id' => $program->id, 'coach_id' => auth()->id()]);
-```
+| Action | Log key | Fields |
+| --- | --- | --- |
+| `ProgramController::store` | `program.created` | `program_id`, `coach_id` |
+| `ProgramController::update` | `program.updated` | `program_id`, `coach_id` |
+| `ProgramController::destroy` | `program.deleted` | `program_id`, `coach_id` |
+| `ProgramExerciseController::store` | `exercise.created` | `exercise_id`, `program_id`, `coach_id` |
+| `ProgramExerciseController::destroy` | `exercise.deleted` | `exercise_id`, `program_id`, `coach_id` |
+| `ProgramExerciseController::reorder` | `exercise.reordered` | `exercise_id`, `position`, `coach_id` |
 
 ---
 
 ## Criterion 4 — Configuration
 
-**Result: FAIL**
+**Result: PASS**
 
-Magic numbers are hardcoded in FormRequest validation rules. No custom `config/*.php` file exists for this project.
+All validation limits are extracted to `config/workout.php` and referenced via `config()` in every FormRequest. No magic numbers appear in application logic.
 
-**Hardcoded values found:**
-
-| Value | Location | Meaning |
+| Config key | Value | Used in |
 | --- | --- | --- |
-| `120` | `StoreProgramRequest:21`, `UpdateProgramRequest:23`, `StoreProgramExerciseRequest:17` | Max length for name/exercise_name |
-| `80` | `StoreProgramRequest:29` | Max length for day label |
-| `255` | `StoreProgramRequest:32`, `StoreProgramExerciseRequest:18` | Max sets |
-| `20` | `StoreProgramRequest:33`, `StoreProgramExerciseRequest:19` | Max length for reps string |
-
-**Fix:** Create `config/workout.php` and reference values via `config()`:
-
-```php
-// config/workout.php
-return [
-    'program_name_max'    => 120,
-    'day_label_max'       => 80,
-    'exercise_name_max'   => 120,
-    'sets_max'            => 255,
-    'reps_max'            => 20,
-];
-```
-
-Then in requests: `'max:' . config('workout.program_name_max')`.
+| `workout.program_name_max` | 120 | `StoreProgramRequest`, `UpdateProgramRequest` |
+| `workout.day_label_max` | 80 | `StoreProgramRequest` |
+| `workout.exercise_name_max` | 120 | `StoreProgramRequest`, `StoreProgramExerciseRequest` |
+| `workout.sets_max` | 255 | `StoreProgramRequest`, `StoreProgramExerciseRequest` |
+| `workout.reps_max` | 20 | `StoreProgramRequest`, `StoreProgramExerciseRequest` |
 
 ---
 
@@ -133,7 +109,7 @@ Every operation that writes to more than one table is wrapped in `DB::transactio
 
 **Result: PASS**
 
-**Stack traces:** `.env` is gitignored and contains `APP_DEBUG=true` for local development only. The default Laravel exception handler suppresses stack traces in production when `APP_DEBUG=false`. No custom exception handler overrides this. As long as `APP_DEBUG=false` is set in production, no stack trace will reach the client.
+**Stack traces:** `.env` is gitignored. `.env.example` sets `APP_DEBUG=false`. The default Laravel exception handler suppresses stack traces when `APP_DEBUG=false`. No custom exception handler overrides this.
 
 **Auth middleware:** All eight API endpoints are inside a `Route::middleware('auth:sanctum')->group(...)` in `routes/api.php:12`. The standalone `/api/user` route at line 6 is also behind `auth:sanctum`.
 
@@ -145,24 +121,22 @@ Every operation that writes to more than one table is wrapped in `DB::transactio
 
 ## Criterion 8 — API Consistency
 
-**Result: FAIL**
+**Result: PASS**
 
-**Status codes** are mostly correct:
+All HTTP status codes follow REST conventions:
 
-| Action | Code | Correct per rubric |
-| --- | --- | --- |
-| `index` | 200 | ✓ |
-| `store` (program) | 201 | ✓ |
-| `show` | 200 | ✓ |
-| `update` | 200 | ✓ |
-| `destroy` (program) | 204 | ✓ |
-| `store` (exercise) | 201 | ✓ |
-| `destroy` (exercise) | 200 | ✗ — returns body; rubric requires 204 for deletes |
-| `reorder` | 200 | ✓ |
+| Action | Code |
+| --- | --- |
+| `index` | 200 |
+| `store` (program) | 201 |
+| `show` | 200 |
+| `update` | 200 |
+| `destroy` (program) | 204 |
+| `store` (exercise) | 201 |
+| `destroy` (exercise) | 204 |
+| `reorder` | 200 |
 
-**API Resources:** Not used. All controllers return raw Eloquent models via `response()->json($model)`. The rubric requires consistent use of API resource objects. Raw model serialisation exposes all model attributes including timestamps and pivot data by default, and gives no single place to control the response shape.
-
-**Fix:** Create `ProgramResource`, `ProgramDayResource`, and `ProgramDayExerciseResource` extending `JsonResource` and use them in all controller responses.
+API Resources are used consistently across all endpoints. `ProgramResource`, `ProgramDayResource`, and `ProgramDayExerciseResource` control all response shapes. `JsonResource::withoutWrapping()` is set in `AppServiceProvider` so responses are not wrapped in a `data` key. No controller returns raw models or arrays.
 
 ---
 
@@ -174,7 +148,7 @@ All 12 feature tests pass with 46 assertions. No tests are marked `->skip()` or 
 
 ```
 Tests:    12 passed (46 assertions)
-Duration: 0.58s
+Duration: 0.59s
 ```
 
 Coverage includes: program creation, nested validation, scoped uniqueness, ownership (403 vs 404), exercise delete renumbering, reorder upward, reorder downward, and soft-delete cascade.
@@ -183,13 +157,9 @@ Coverage includes: program creation, nested validation, scoped uniqueness, owner
 
 ## Criterion 10 — No Hardcoded Environment Values
 
-**Result: FAIL**
+**Result: PASS**
 
-`.env.example` has `APP_DEBUG=true` on line 4. A developer who copies this verbatim to `.env` in a production-like environment will deploy with debug mode on, exposing stack traces and request data in HTTP error responses.
-
-`.env` is correctly listed in `.gitignore` and is not tracked. No credentials, API keys, or secrets appear in any tracked file.
-
-**Fix:** Change `.env.example` line 4 to `APP_DEBUG=false`.
+`.env.example` sets `APP_DEBUG=false`. `.env` is listed in `.gitignore` and is not tracked. No credentials, API keys, or secrets appear in any tracked file.
 
 ---
 
@@ -197,21 +167,13 @@ Coverage includes: program creation, nested validation, scoped uniqueness, owner
 
 | # | Criterion | Result |
 | --- | --- | --- |
-| 1 | Type Safety (`declare(strict_types=1)`) | **FAIL** |
+| 1 | Type Safety (`declare(strict_types=1)`) | **PASS** |
 | 2 | Error Handling | **PASS** |
-| 3 | Observability (logging on state changes) | **FAIL** |
-| 4 | Configuration (no magic numbers) | **FAIL** |
+| 3 | Observability (logging on state changes) | **PASS** |
+| 4 | Configuration (no magic numbers) | **PASS** |
 | 5 | Validation (no N+1 queries) | **PASS** |
 | 6 | Data Integrity (transactions, locks) | **PASS** |
 | 7 | Security (auth, debug, stack traces) | **PASS** |
-| 8 | API Consistency (resources, status codes) | **FAIL** |
+| 8 | API Consistency (resources, status codes) | **PASS** |
 | 9 | Tests Pass | **PASS** |
-| 10 | No Hardcoded Environment Values | **FAIL** |
-
-## Priority order for fixes
-
-1. `APP_DEBUG=false` in `.env.example` — one-line change, high production risk if missed
-2. `declare(strict_types=1)` in all 12 `app/` files — mechanical, no logic changes
-3. Logging on all 6 state-changing actions — required for incident investigation
-4. Extract magic numbers to `config/workout.php` — unblocks per-environment tuning
-5. API Resources — controls response shape and prevents accidental attribute leakage
+| 10 | No Hardcoded Environment Values | **PASS** |
