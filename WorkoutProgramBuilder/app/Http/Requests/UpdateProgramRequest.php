@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -20,7 +22,7 @@ class UpdateProgramRequest extends FormRequest
             'name' => [
                 'required',
                 'string',
-                'max:120',
+                'max:' . config('workout.program_name_max'),
                 Rule::unique('programs')
                     ->where('coach_id', $this->user()->id)
                     ->whereNull('deleted_at')

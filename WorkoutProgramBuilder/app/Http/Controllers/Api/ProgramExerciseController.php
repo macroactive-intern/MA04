@@ -1,15 +1,20 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ReorderProgramExerciseRequest;
 use App\Http\Requests\StoreProgramExerciseRequest;
+use App\Http\Resources\ProgramDayExerciseResource;
 use App\Models\Program;
 use App\Models\ProgramDay;
 use App\Models\ProgramDayExercise;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ProgramExerciseController extends Controller
 {
@@ -25,14 +30,16 @@ class ProgramExerciseController extends Controller
 
         $position = $day->exercises()->count() + 1;
 
-        $day->exercises()->create(
+        $exercise = $day->exercises()->create(
             array_merge($request->validated(), ['position' => $position])
         );
 
-        return response()->json($day->exercises()->get(), 201);
+        Log::info('exercise.created', ['exercise_id' => $exercise->id, 'program_id' => $program->id, 'coach_id' => auth()->id()]);
+
+        return response()->json(ProgramDayExerciseResource::collection($day->exercises()->get()), 201);
     }
 
-    public function destroy(Program $program, ProgramDay $day, ProgramDayExercise $exercise): JsonResponse
+    public function destroy(Program $program, ProgramDay $day, ProgramDayExercise $exercise): Response
     {
         if ($program->coach_id !== auth()->id()) {
             abort(403);
@@ -57,7 +64,9 @@ class ProgramExerciseController extends Controller
                 ->decrement('position');
         });
 
-        return response()->json($day->exercises()->get());
+        Log::info('exercise.deleted', ['exercise_id' => $exercise->id, 'program_id' => $program->id, 'coach_id' => auth()->id()]);
+
+        return response()->noContent();
     }
 
     public function reorder(ReorderProgramExerciseRequest $request, Program $program, ProgramDay $day, ProgramDayExercise $exercise): JsonResponse
@@ -104,6 +113,8 @@ class ProgramExerciseController extends Controller
             });
         }
 
-        return response()->json($day->exercises()->get());
+        Log::info('exercise.reordered', ['exercise_id' => $exercise->id, 'position' => $newPosition, 'coach_id' => auth()->id()]);
+
+        return response()->json(ProgramDayExerciseResource::collection($day->exercises()->get()));
     }
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -18,7 +20,7 @@ class StoreProgramRequest extends FormRequest
             'name'                              => [
                 'required',
                 'string',
-                'max:120',
+                'max:' . config('workout.program_name_max'),
                 Rule::unique('programs')
                     ->where('coach_id', $this->user()->id)
                     ->whereNull('deleted_at'),
@@ -26,12 +28,12 @@ class StoreProgramRequest extends FormRequest
             'description'                       => ['nullable', 'string'],
 
             'days'                              => ['required', 'array', 'min:1'],
-            'days.*.label'                      => ['nullable', 'string', 'max:80'],
+            'days.*.label'                      => ['nullable', 'string', 'max:' . config('workout.day_label_max')],
 
             'days.*.exercises'                  => ['required', 'array', 'min:1'],
-            'days.*.exercises.*.exercise_name'  => ['required', 'string', 'max:120'],
-            'days.*.exercises.*.sets'           => ['required', 'integer', 'min:1', 'max:255'],
-            'days.*.exercises.*.reps'           => ['required', 'string', 'max:20'],
+            'days.*.exercises.*.exercise_name'  => ['required', 'string', 'max:' . config('workout.exercise_name_max')],
+            'days.*.exercises.*.sets'           => ['required', 'integer', 'min:1', 'max:' . config('workout.sets_max')],
+            'days.*.exercises.*.reps'           => ['required', 'string', 'max:' . config('workout.reps_max')],
             'days.*.exercises.*.notes'          => ['nullable', 'string'],
         ];
     }

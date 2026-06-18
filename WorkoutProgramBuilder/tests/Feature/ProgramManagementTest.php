@@ -160,7 +160,7 @@ test('deleting an exercise renumbers remaining exercises contiguously', function
 
     $this->actingAs($coach)
         ->deleteJson("/api/programs/{$program->id}/days/{$day->id}/exercises/{$exercises['B']->id}")
-        ->assertStatus(200);
+        ->assertStatus(204);
 
     $positions = ProgramDayExercise::where('program_day_id', $day->id)
         ->whereNull('deleted_at')

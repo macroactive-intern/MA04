@@ -1,14 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreProgramRequest;
 use App\Http\Requests\UpdateProgramRequest;
+use App\Http\Resources\ProgramResource;
 use App\Models\Program;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ProgramController extends Controller
 {
@@ -16,7 +20,7 @@ class ProgramController extends Controller
     {
         $programs = Program::where('coach_id', auth()->id())->get();
 
-        return response()->json($programs);
+        return response()->json(ProgramResource::collection($programs));
     }
 
     public function store(StoreProgramRequest $request): JsonResponse
@@ -50,7 +54,9 @@ class ProgramController extends Controller
 
         $program->load('days.exercises');
 
-        return response()->json($program, 201);
+        Log::info('program.created', ['program_id' => $program->id, 'coach_id' => $program->coach_id]);
+
+        return response()->json(new ProgramResource($program), 201);
     }
 
     public function show(Program $program): JsonResponse
@@ -61,7 +67,7 @@ class ProgramController extends Controller
 
         $program->load('days.exercises');
 
-        return response()->json($program);
+        return response()->json(new ProgramResource($program));
     }
 
     public function update(UpdateProgramRequest $request, Program $program): JsonResponse
@@ -72,7 +78,9 @@ class ProgramController extends Controller
 
         $program->update($request->validated());
 
-        return response()->json($program);
+        Log::info('program.updated', ['program_id' => $program->id, 'coach_id' => auth()->id()]);
+
+        return response()->json(new ProgramResource($program));
     }
 
     public function destroy(Program $program): Response
@@ -89,6 +97,8 @@ class ProgramController extends Controller
             $program->days()->delete();
             $program->delete();
         });
+
+        Log::info('program.deleted', ['program_id' => $program->id, 'coach_id' => auth()->id()]);
 
         return response()->noContent();
     }
