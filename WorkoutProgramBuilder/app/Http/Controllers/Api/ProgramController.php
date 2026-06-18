@@ -7,6 +7,7 @@ use App\Http\Requests\StoreProgramRequest;
 use App\Http\Requests\UpdateProgramRequest;
 use App\Models\Program;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 
 class ProgramController extends Controller
@@ -74,7 +75,7 @@ class ProgramController extends Controller
         return response()->json($program);
     }
 
-    public function destroy(Program $program): JsonResponse
+    public function destroy(Program $program): Response
     {
         if ($program->coach_id !== auth()->id()) {
             abort(403);

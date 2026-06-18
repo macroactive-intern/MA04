@@ -82,15 +82,22 @@ class ProgramExerciseController extends Controller
                 $exercise->update(['position' => 0]);
 
                 if ($newPosition < $oldPosition) {
+                    // Moving upward — increment affected rows highest-first to avoid
+                    // transient duplicate positions hitting the unique index.
                     ProgramDayExercise::where('program_day_id', $day->id)
                         ->whereNull('deleted_at')
                         ->whereBetween('position', [$newPosition, $oldPosition - 1])
-                        ->increment('position');
+                        ->orderBy('position', 'desc')
+                        ->get()
+                        ->each(fn ($e) => $e->update(['position' => $e->position + 1]));
                 } else {
+                    // Moving downward — decrement affected rows lowest-first.
                     ProgramDayExercise::where('program_day_id', $day->id)
                         ->whereNull('deleted_at')
                         ->whereBetween('position', [$oldPosition + 1, $newPosition])
-                        ->decrement('position');
+                        ->orderBy('position', 'asc')
+                        ->get()
+                        ->each(fn ($e) => $e->update(['position' => $e->position - 1]));
                 }
 
                 $exercise->update(['position' => $newPosition]);
