@@ -57,4 +57,27 @@ App\Http\Controllers\Api\ProgramController::destroy(): Return value must be of t
   Tests:    2 failed, 12 passed (38 assertions)
   Duration: 0.58s
 
-  
+  ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────  
+
+ PASS  Tests\Unit\ExampleTest
+  ✓ that true is true
+
+   PASS  Tests\Feature\ExampleTest
+  ✓ the application returns a successful response                                                                                                      0.13s  
+
+   PASS  Tests\Feature\ProgramManagementTest
+  ✓ coach can create a program with days and exercises                                                                                                 0.13s  
+  ✓ label must be a string                                                                                                                             0.02s  
+  ✓ exercise_name is required                                                                                                                          0.01s  
+  ✓ sets must be at least 1                                                                                                                            0.01s  
+  ✓ reps is required                                                                                                                                   0.01s  
+  ✓ two coaches can share the same program name                                                                                                        0.02s  
+  ✓ one coach cannot create two active programs with the same name                                                                                     0.02s  
+  ✓ another coach gets 403 on show, update, and delete                                                                                                 0.02s  
+  ✓ deleting an exercise renumbers remaining exercises contiguously                                                                                    0.01s  
+  ✓ moving an exercise upward shifts others down                                                                                                       0.02s  
+  ✓ moving an exercise downward shifts others up                                                                                                       0.01s  
+  ✓ deleting a program soft-deletes it and cascades to days and exercises                                                                              0.02s  
+
+  Tests:    14 passed (48 assertions)
+  Duration: 0.58s
