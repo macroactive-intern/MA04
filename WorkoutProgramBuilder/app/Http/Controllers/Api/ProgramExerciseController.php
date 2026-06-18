@@ -25,11 +25,11 @@ class ProgramExerciseController extends Controller
 
         $position = $day->exercises()->count() + 1;
 
-        $exercise = $day->exercises()->create(
+        $day->exercises()->create(
             array_merge($request->validated(), ['position' => $position])
         );
 
-        return response()->json($exercise, 201);
+        return response()->json($day->exercises()->get(), 201);
     }
 
     public function destroy(Program $program, ProgramDay $day, ProgramDayExercise $exercise): JsonResponse
